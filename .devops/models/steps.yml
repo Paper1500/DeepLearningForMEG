@@ -1,0 +1,30 @@
+parameters:
+  dataset: camcan
+  target: is_audio
+  fast_dev_run: False
+  use_gpu: True
+  models:
+    - "varcnn"
+    - "lfcnn"
+    - "timeconv"
+    - "timeres"
+    - "transformer"
+    - "googlenet"
+    - "resnet"
+  subsets: ["null"]
+
+steps:
+  - ${{ each subset in parameters.subsets }}:
+      - ${{ each model in parameters.models }}:
+          - bash: |
+              source activate $(env)
+              python main.py \
+                  model=${{ model }} \
+                  datamodule=${{ parameters.dataset }} \
+                  datamodule.target_field=${{ parameters.target }} \
+                  datamodule.subset=${{subset}} \
+                  trainer.fast_dev_run=${{parameters.fast_dev_run}} \
+                  trainer.use_gpu=${{parameters.use_gpu}} \
+                  trainer.logger.project=models \
+                  trainer.logger.name="${{parameters.dataset}}-${{model}}" \
+            displayName: Train ${{parameters.dataset}}-${{model}}-${{subset}}

@@ -1,0 +1,36 @@
+parameters:
+  dataset: camcan
+  targets: [is_audio]
+  models:
+    - "varcnn"
+    - "lfcnn"
+    - "timeconv"
+    - "timeres"
+    - "transformer"
+    - "googlenet"
+    - "resnet"
+
+  fast_dev_run: False
+  demands: ["Agent.OS"]
+  use_gpu: True
+  subsets: ["null"]
+
+jobs:
+  - ${{ each target in parameters.targets }}:
+      - job:
+        displayName: ${{ parameters.dataset }}_${{ target }}
+        timeoutInMinutes: 0
+        pool:
+          name: "Default"
+          demands: ${{ parameters.demands }}
+        steps:
+          - template: /.devops/set_up.yml
+
+          - template: steps.yml
+            parameters:
+              dataset: ${{ parameters.dataset }}
+              target: ${{ target }}
+              fast_dev_run: ${{parameters.fast_dev_run}}
+              use_gpu: ${{parameters.use_gpu}}
+              models: ${{parameters.models}}
+              subsets: ${{parameters.subsets}}

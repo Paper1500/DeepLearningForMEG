@@ -1,0 +1,19 @@
+parameters:
+  test_run: False
+  max_subjects: 1000
+
+jobs:
+  - template: jobs.yml
+    parameters:
+      test_run: ${{parameters.test_run}}
+      max_subjects: ${{parameters.max_subjects}}
+      dataset: camcan
+      # variants: ["all", "baseline", "include-all", "include-baseline", "include-scale", "raw", "scale", "window" ]
+      variants: ["baseline"]
+  # - template: jobs.yml
+  #   parameters:
+  #     test_run: ${{parameters.test_run}}
+  #     max_subjects: ${{parameters.max_subjects}}
+  #     demands: ["HIGH_MEMORY"]
+  #     dataset: mous
+  #     variants: ["all", "baseline", "raw", "scale", "window" ]

@@ -1,0 +1,21 @@
+trigger: none
+
+variables:
+  env: ptl
+  env_file: environment.lock.yml
+
+stages:
+  - stage: TESTS
+    displayName: Run Tests
+    jobs:
+      - template: run_tests.yml
+
+  - template: stages.yml
+    parameters:
+      name: Models
+      template: models/stage_jobs.yml
+
+  - template: stages.yml
+    parameters:
+      name: Autoencoder
+      template: autoencoder/stage_jobs.yml

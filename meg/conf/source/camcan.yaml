@@ -1,0 +1,10 @@
+# @package _group_
+
+name: camcan
+
+target: camcan.CamCanDataset
+
+file:
+  target: camcan.CamCanFile
+  params:
+    window_size: 700

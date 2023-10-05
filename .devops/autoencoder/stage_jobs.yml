@@ -1,0 +1,21 @@
+parameters:
+  fast_dev_run: False
+  use_gpu: True
+  demands: ["Agent.OS"]
+
+jobs:
+  - template: jobs.yml
+    parameters:
+      fast_dev_run: ${{parameters.fast_dev_run}}
+      use_gpu: ${{parameters.use_gpu}}
+      demands: ${{parameters.demands}}
+      dataset: camcan
+      targets: ["is_audio", "tone"]
+
+  - template: jobs.yml
+    parameters:
+      fast_dev_run: ${{parameters.fast_dev_run}}
+      use_gpu: ${{parameters.use_gpu}}
+      demands: ${{parameters.demands}}
+      dataset: mous
+      targets: ["is_audio", "sentence", "relative_clause"]

@@ -1,0 +1,49 @@
+parameters:
+  dataset: camcan
+  targets: ["is_audio"]
+  models: ["varcnn", "lfcnn", "timeres", "transformer"]
+  downsamplings: [8]
+  crop_sizes: [64, 128]
+  fast_dev_run: False
+  demands: ["Agent.OS"]
+  use_gpu: True
+
+jobs:
+  - ${{ each downsampling in parameters.downsamplings }}:
+      - ${{ each num_samples in parameters.crop_sizes }}:
+          - job:
+            displayName: ${{ parameters.dataset }}_${{ downsampling }}_${{ num_samples }}
+            timeoutInMinutes: 0
+            pool:
+              name: "Default"
+              demands: ${{ parameters.demands }}
+
+            steps:
+              - template: /.devops/set_up.yml
+
+              - bash: |
+                  source activate $(env)
+                  python train_encoder.py \
+                    datamodule.downsampling=${{ downsampling }} \
+                    datamodule.num_samples=${{ num_samples }} \
+                    datamodule.batch_size=32 \
+                    datamodule=${{ parameters.dataset }} \
+                    model=autoencoder \
+                    trainer.fast_dev_run=${{parameters.fast_dev_run}} \
+                    trainer.use_gpu=${{parameters.use_gpu}} \
+                    trainer.n_models=1 \
+                    trainer.logger.project=autoencoder \
+                    trainer.logger.name=${{ parameters.dataset }}_${{ downsampling }}_${{ num_samples }} \
+                    trainer.accumulate_grad_batches=4 \
+                displayName: Train Autoencoder
+                condition: ge(${{ num_samples }}, 128)
+
+              - template: steps.yml
+                parameters:
+                  dataset: ${{ parameters.dataset }}
+                  fast_dev_run: ${{parameters.fast_dev_run}}
+                  use_gpu: ${{parameters.use_gpu}}
+                  models: ${{parameters.models}}
+                  downsampling: ${{downsampling}}
+                  num_samples: ${{num_samples}}
+                  targets: ${{parameters.targets}}

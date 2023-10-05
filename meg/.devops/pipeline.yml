@@ -1,0 +1,61 @@
+triggers: none
+
+variables:
+  env: datasets
+  env_file: environment.lock.yml
+
+stages:
+  - stage: TESTS
+    displayName: Run Tests
+    jobs:
+      - template: run_tests.yml
+
+  - stage: TestBuild
+    displayName: Test Build
+    dependsOn: TESTS
+    jobs:
+      - template: stage_jobs.yml
+        parameters:
+          test_run: True
+          max_subjects: 10
+
+  - stage: Build
+    displayName: Build
+    dependsOn: TestBuild
+
+    condition: |
+      and(
+        in(variables['Build.SourceBranch'], 'refs/heads/develop', 'refs/heads/master'),
+        succeeded()
+      )
+    jobs:
+      - template: stage_jobs.yml
+        parameters:
+          test_run: False
+          max_subjects: 1000
+
+  - stage: Deploy
+    displayName: Deploy
+    dependsOn: Build
+
+    jobs:
+      - deployment: DeployDatasets
+        environment: ProductionDatasets
+        timeoutInMinutes: 720
+        pool:
+          name: "Default"
+          demands: ["DATA_STORAGE"]
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - bash: |
+                    for file in $(ls $(STAGING_PATH))
+                    do
+                      echo "Removing $(DATASETS_PATH)/$file/$(Build.SourceBranchName)"
+                      rm -r $(DATASETS_PATH)/$file/$(Build.SourceBranchName) || true
+                      echo "Moving $(STAGING_PATH)/$file/$(Build.SourceBranchName) to $(DATASETS_PATH)/$file/$(Build.SourceBranchName)"
+                      mkdir --parents $(DATASETS_PATH)/$file/$(Build.SourceBranchName)
+                      mv $(STAGING_PATH)/$file/$(Build.SourceBranchName) $(DATASETS_PATH)/$file/
+                    done
+                  displayName: TEST Step

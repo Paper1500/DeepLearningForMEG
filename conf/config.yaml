@@ -1,0 +1,36 @@
+defaults:
+  - model: varcnn
+  - optim: adam
+  - datamodule: camcan
+
+downsampler:
+  enabled: False
+  frozen: True
+  path:
+
+trainer:
+  n_models: 3
+  use_gpu: True
+  fast_dev_run: False
+  min_epochs: 3
+  max_epochs: 40
+  progress_bar_refresh_rate: 50
+  accumulate_grad_batches: 1
+  track_grad_norm: None
+
+  logger:
+    _target_: pytorch_lightning.loggers.wandb.WandbLogger
+    entity:
+    project: MEG
+    name: ${datamodule.dataset}-${model._target_}
+    tags:
+
+build:
+  id: 0
+  branch: main
+  commit: 0
+  temp_directory: temp
+
+system:
+  data_dir: data
+  cache_dir: cache

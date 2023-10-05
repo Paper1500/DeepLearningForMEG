@@ -1,0 +1,28 @@
+parameters:
+    dataset: camcan
+    variants: ["baseline"]
+    test_run: False
+    max_subjects: 1000
+    demands: ["Agent.OS"]
+
+jobs:
+  - ${{ each variant in parameters.variants }}:
+    - job:
+      displayName: ${{ parameters.dataset }}_${{ variant }}
+      timeoutInMinutes: 0
+      pool:
+          name: 'Default'
+          demands: ${{ parameters.demands }}
+          
+      steps:
+      - template: /.devops/set_up.yml
+
+      - bash: |
+          source activate $(env)
+          python ./main.py \
+            build.test_run=${{parameters.test_run}} \
+            data.dataset=${{ parameters.dataset }} \
+            data.max_subjects=${{parameters.max_subjects}} \
+            variant=${{ variant }} \
+        displayName: Build Dataset
+      

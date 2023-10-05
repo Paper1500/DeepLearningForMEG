@@ -1,0 +1,10 @@
+
+
+steps:
+- bash: echo "##vso[task.prependpath]$CONDA/bin"
+  displayName: Add conda to PATH
+- task: Bash@3
+  inputs:
+    filePath: ./create_env.sh
+    arguments: $(env) $(env_file)
+  displayName: Create environment

@@ -1,0 +1,24 @@
+parameters:
+  env: ptl
+  env_file: environment.lock.yml
+
+jobs:
+  - job:
+    displayName: Run Tests
+    pool:
+      name: "Default"
+
+    timeoutInMinutes: 60
+
+    steps:
+      - template: set_up.yml
+
+      - bash: |
+          source activate $(env)
+          python -m pytest --junit-xml $(Agent.TempDirectory)results.xml
+        displayName: Run tests
+
+      - task: PublishTestResults@2
+        condition: always()
+        inputs:
+          testResultsFiles: $(Agent.TempDirectory)results.xml

@@ -1,0 +1,50 @@
+# NOTE: If you are trying to work out how the pipeline runs, you can safely ignore the conditions in this file.
+# TL;DR: The pipeline does a runs the tests then does a trial run and if that succeeds, it runs the full training.
+parameters:
+  name:
+  template:
+
+stages:
+  - stage: ${{ parameters.name }}Dev
+    displayName: ${{ parameters.name }} Dev Run
+    dependsOn: TESTS
+    condition: |
+      and(
+        or(
+          in(variables['Build.SourceBranch'], 'refs/heads/develop', 'refs/heads/master'),
+          or(eq(variables.Run${{ parameters.name }}Exp, 'True'), eq(variables.Run${{ parameters.name }}Exp, 'Always'))
+        ),
+        succeeded()
+      )
+    jobs:
+      - template: ${{ parameters.template }}
+        parameters:
+          fast_dev_run: True
+          use_gpu: False
+          demands: ["Agent.ComputerName -equals GPU_HOST"]
+
+  - stage: ${{ parameters.name }}
+    displayName: Train ${{ parameters.name }} Models
+    dependsOn: ${{ parameters.name }}Dev
+
+    condition: |
+      and(
+        or(
+          or(
+            eq(variables['Build.SourceBranch'], 'refs/heads/master'),
+            and
+            (
+              eq(variables['Build.SourceBranch'], 'refs/heads/develop'),
+              eq(variables.Run${{ parameters.name }}Exp, 'True')
+            )
+          ),
+          eq(variables.Run${{ parameters.name }}Exp, 'Always')
+        ),
+        succeeded()
+      )
+    jobs:
+      - template: ${{ parameters.template }}
+        parameters:
+          fast_dev_run: False
+          use_gpu: True
+          demands: ["GPU", "Agent.ComputerName -equals GPU_HOST"]

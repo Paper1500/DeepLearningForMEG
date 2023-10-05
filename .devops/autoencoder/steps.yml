@@ -1,0 +1,83 @@
+parameters:
+  dataset: mous
+  fast_dev_run: False
+  use_gpu: True
+  models: ["varcnn", "lfcnn", "timeres", "transformer"]
+  targets: ["is_audio"]
+  downsampling: 4
+  num_samples: 128
+
+steps:
+  - ${{ each model in parameters.models }}:
+      - ${{ each target in parameters.targets }}:
+          - bash: |
+              source activate $(env)
+              python main.py \
+                  model=${{ model }} \
+                  datamodule.downsampling=${{ parameters.downsampling }} \
+                  datamodule.num_samples=${{ parameters.num_samples }} \
+                  datamodule.target_field=${{ target }} \
+                  datamodule=${{ parameters.dataset }} \
+                  trainer.fast_dev_run=${{parameters.fast_dev_run}} \
+                  trainer.use_gpu=${{parameters.use_gpu}} \
+                  trainer.n_models=1 \
+                  trainer.logger.project=autoencoder
+            displayName: Train ${{model}}_${{target}}
+
+          - bash: |
+              source activate $(env)
+              export CHECKPOINT_PATH=$(checkpoint_path)
+              echo training using encoder checkpoint $CHECKPOINT_PATH
+              python main.py \
+                  model=${{ model }} \
+                  datamodule.downsampling=${{ parameters.downsampling }} \
+                  datamodule.num_samples=${{ parameters.num_samples }} \
+                  datamodule.target_field=${{ target }} \
+                  datamodule=${{ parameters.dataset }} \
+                  downsampler.enabled=True \
+                  downsampler.frozen=True \
+                  trainer.fast_dev_run=${{parameters.fast_dev_run}} \
+                  trainer.use_gpu=${{parameters.use_gpu}} \
+                  trainer.n_models=1 \
+                  trainer.logger.project=autoencoder
+            displayName: Train frozen-autoencoder_${{model}}_${{target}}
+            condition: and(ge(${{ parameters.num_samples }}, 128), succeeded())
+
+          - bash: |
+              source activate $(env)
+              export CHECKPOINT_PATH=$(checkpoint_path)
+              echo training using encoder checkpoint $CHECKPOINT_PATH
+              python main.py \
+                  model=${{ model }} \
+                  datamodule.downsampling=${{ parameters.downsampling }} \
+                  datamodule.num_samples=${{ parameters.num_samples }} \
+                  datamodule.target_field=${{ target }} \
+                  datamodule=${{ parameters.dataset }} \
+                  downsampler.enabled=True \
+                  downsampler.frozen=False \
+                  trainer.fast_dev_run=${{parameters.fast_dev_run}} \
+                  trainer.use_gpu=${{parameters.use_gpu}} \
+                  trainer.n_models=1 \
+                  trainer.logger.project=autoencoder
+            displayName: Train autoencoder_${{model}}_${{target}}
+            condition: and(ge(${{ parameters.num_samples }}, 128), succeeded())
+
+          - bash: |
+              source activate $(env)
+              export CHECKPOINT_PATH=$(checkpoint_path)
+              echo training using encoder checkpoint $CHECKPOINT_PATH
+              python main.py \
+                  model=${{ model }} \
+                  datamodule.downsampling=${{ parameters.downsampling }} \
+                  datamodule.num_samples=${{ parameters.num_samples }} \
+                  datamodule.target_field=${{ target }} \
+                  datamodule=${{ parameters.dataset }} \
+                  downsampler.enabled=True \
+                  downsampler.frozen=False \
+                  downsampler.path= \
+                  trainer.fast_dev_run=${{parameters.fast_dev_run}} \
+                  trainer.use_gpu=${{parameters.use_gpu}} \
+                  trainer.n_models=1 \
+                  trainer.logger.project=autoencoder
+            displayName: Train untrained_autoencoder_${{model}}_${{target}}
+            condition: and(ge(${{ parameters.num_samples }}, 128), succeeded())

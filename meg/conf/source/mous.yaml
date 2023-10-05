@@ -1,0 +1,10 @@
+# @package _group_
+
+name: mous
+
+target: mous.MousDataset
+
+file:
+  target: mous.MousFile
+  params:
+    window_size: 600

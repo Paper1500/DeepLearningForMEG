@@ -1,0 +1,20 @@
+# @package _global_
+
+build:
+  id: dev
+  branch: main
+  commit: 0
+  input_directory: data
+  output_directory: output
+  temp_directory: temp
+  test_run: False
+data:
+  dataset: camcan
+  downsampling: [8]
+  filter_type: mne
+  max_subjects: 1000
+  random_seed: 42
+  sample_generation: numpy
+  window_normalization: baseline
+  window_size: 600
+  include_baseline: False
